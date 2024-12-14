@@ -37,29 +37,8 @@ const Chat = () => {
         return;
       }
       setUser(user);
-    };
 
-    checkUser();
-
-    // Subscribe to new messages
-    const channel = supabase
-      .channel('public:messages')
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'messages'
-        },
-        (payload) => {
-          const newMessage = payload.new as Message;
-          setMessages(prevMessages => [...prevMessages, newMessage]);
-        }
-      )
-      .subscribe();
-
-    // Fetch existing messages
-    const fetchMessages = async () => {
+      // Fetch existing messages
       const { data, error } = await supabase
         .from('messages')
         .select('*')
@@ -77,7 +56,27 @@ const Chat = () => {
       setMessages(data || []);
     };
 
-    fetchMessages();
+    checkUser();
+
+    // Set up real-time subscription
+    const channel = supabase
+      .channel('custom-all-channel')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'messages',
+        },
+        (payload) => {
+          console.log('New message received:', payload);
+          const newMessage = payload.new as Message;
+          setMessages((currentMessages) => [...currentMessages, newMessage]);
+        }
+      )
+      .subscribe((status) => {
+        console.log('Subscription status:', status);
+      });
 
     return () => {
       supabase.removeChannel(channel);
