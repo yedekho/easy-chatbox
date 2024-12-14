@@ -23,13 +23,19 @@ const Signup = () => {
       const { error } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/login`,
+          data: {
+            username: formData.email.split('@')[0],
+          }
+        }
       });
 
       if (error) throw error;
 
       toast({
         title: "Success!",
-        description: "Account created successfully. Please log in.",
+        description: "Please check your email to verify your account.",
       });
       navigate("/login");
     } catch (error: any) {

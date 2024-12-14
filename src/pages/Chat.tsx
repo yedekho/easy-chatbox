@@ -43,14 +43,19 @@ const Chat = () => {
 
     // Subscribe to new messages
     const channel = supabase
-      .channel('messages')
-      .on('postgres_changes', {
-        event: 'INSERT',
-        schema: 'public',
-        table: 'messages'
-      }, (payload) => {
-        setMessages(prev => [...prev, payload.new as Message]);
-      })
+      .channel('public:messages')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'messages'
+        },
+        (payload) => {
+          const newMessage = payload.new as Message;
+          setMessages(prevMessages => [...prevMessages, newMessage]);
+        }
+      )
       .subscribe();
 
     // Fetch existing messages
@@ -113,7 +118,6 @@ const Chat = () => {
 
   return (
     <div className="flex flex-col h-screen bg-background">
-      {/* Header */}
       <div className="flex justify-between items-center p-4 border-b">
         <h1 className="text-lg font-semibold">Chat Room</h1>
         <Button variant="ghost" size="icon" onClick={handleLogout}>
@@ -121,7 +125,6 @@ const Chat = () => {
         </Button>
       </div>
 
-      {/* Messages */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {messages.map((message) => (
           <div
@@ -148,7 +151,6 @@ const Chat = () => {
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Message Input */}
       <form onSubmit={handleSend} className="p-4 border-t flex gap-2">
         <Input
           value={newMessage}
